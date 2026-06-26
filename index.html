@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Trophy ROI" />
+  <meta name="theme-color" content="#101820" />
+  <title>Trophy ROI Optimizer</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="supabase-config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="top-nav">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">🏆</span>
+        <span>
+          <strong>Trophy ROI</strong>
+          <small>Optimizer</small>
+        </span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#dashboard">Dashboard</a>
+        <a href="#games">Games</a>
+        <a href="#settings">Weights</a>
+      </nav>
+
+      <div class="account-box">
+        <span id="cloudStatus" class="status-pill">Checking...</span>
+        <div class="avatar" id="avatarInitial">?</div>
+        <div class="account-text">
+          <strong id="displayName">Trophy Hunter</strong>
+          <small id="userEmail"></small>
+        </div>
+        <button class="nav-button" onclick="signOut()">Sign out</button>
+      </div>
+    </header>
+
+    <section class="profile-banner">
+      <div>
+        <p class="eyebrow">Backlog Advisor</p>
+        <h1>Pick the highest-value trophy grind.</h1>
+        <p class="muted">Rank games by weighted trophy return, hours, difficulty, obtainable platinum, and blocked trophies.</p>
+      </div>
+      <div class="banner-stats">
+        <div><span>Games</span><strong id="gameCount">0</strong></div>
+        <div><span>Best ROI</span><strong id="bestGame">None</strong></div>
+        <div><span>Pts/hr</span><strong id="bestPointsPerHour">0</strong></div>
+      </div>
+    </section>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <section class="panel compact-panel" id="accountPanel">
+          <h2>Account</h2>
+          <label>Username</label>
+          <input class="spaced-input" id="username" type="text" placeholder="TrophyHunter23" autocomplete="username" />
+          <button onclick="saveUsername()">Save username</button>
+          <p class="hint">Email is still used for login and password resets. Username is used for display.</p>
+        </section>
+
+        <section class="panel compact-panel" id="settings">
+          <h2>ROI Weights</h2>
+          <p class="hint">Defaults use PSN trophy points. Change them if your personal priorities are different.</p>
+          <div class="mini-grid">
+            <div><label>Bronze</label><input id="bronzeWeight" type="number" min="0" value="15" /></div>
+            <div><label>Silver</label><input id="silverWeight" type="number" min="0" value="30" /></div>
+            <div><label>Gold</label><input id="goldWeight" type="number" min="0" value="90" /></div>
+            <div><label>Plat</label><input id="platinumWeight" type="number" min="0" value="300" /></div>
+          </div>
+          <label>Extra platinum bonus</label>
+          <input id="platinumBonus" type="number" min="0" value="300" />
+          <label>Difficulty penalty strength</label>
+          <input id="difficultyPenalty" type="number" min="0" step="0.1" value="1" />
+          <div class="button-stack">
+            <button onclick="saveSettings()">Save weights</button>
+            <button class="secondary" onclick="resetWeights()">Reset defaults</button>
+          </div>
+        </section>
+
+        <section class="panel compact-panel">
+          <h2>Data</h2>
+          <div class="button-stack">
+            <button class="secondary" onclick="syncFromCloud()">Refresh cloud data</button>
+            <button class="secondary" onclick="syncLocalToCloud()">Upload local backup</button>
+            <button class="secondary" onclick="exportData()">Export JSON</button>
+            <button class="secondary" onclick="downloadRankingsCSV()">Download CSV</button>
+            <button class="secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
+            <input id="importFile" type="file" accept=".json" hidden onchange="importData(event)" />
+          </div>
+        </section>
+      </aside>
+
+      <section class="content">
+        <section class="panel warning" id="setupWarning" hidden>
+          <h2>Supabase setup needed</h2>
+          <p>Edit <code>supabase-config.js</code> and add your Supabase project URL and anon key. Until then, the app only works locally.</p>
+        </section>
+
+        <section class="stat-grid" id="dashboard">
+          <div class="stat-card"><span>Total completable weighted points</span><strong id="totalCompletablePoints">0</strong></div>
+          <div class="stat-card"><span>Total estimated hours</span><strong id="totalHours">0</strong></div>
+          <div class="stat-card"><span>Cloud status</span><strong id="statusText">Local</strong></div>
+        </section>
+
+        <section class="panel highlight-panel">
+          <div class="panel-title-row">
+            <h2>Recommended Next</h2>
+            <span class="tag">Best overall ROI</span>
+          </div>
+          <div id="recommendation">Add a game to get a recommendation.</div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title-row">
+            <div>
+              <h2 id="formTitle">Add Game</h2>
+              <p class="hint">Leave completable fields blank to count all remaining trophies of that type as obtainable.</p>
+            </div>
+            <button class="secondary small-button" onclick="clearForm()">Clear form</button>
+          </div>
+
+          <div class="form-grid">
+            <div><label>Game title</label><input id="title" placeholder="Example: Astro's Playroom" /></div>
+            <div><label>Difficulty 1-10</label><input id="difficulty" type="number" min="1" max="10" placeholder="2" /></div>
+            <div><label>Estimated hours</label><input id="hours" type="number" min="0.1" step="0.1" placeholder="5" /></div>
+            <div>
+              <label>Platinum obtainable?</label>
+              <select id="platinumCompletable">
+                <option value="yes">Yes / still obtainable</option>
+                <option value="no">No / unobtainable</option>
+              </select>
+            </div>
+          </div>
+
+          <h3>Total trophies</h3>
+          <div class="trophy-row">
+            <div><label>Bronze</label><input id="bronzeTotal" type="number" min="0" placeholder="30" /></div>
+            <div><label>Silver</label><input id="silverTotal" type="number" min="0" placeholder="10" /></div>
+            <div><label>Gold</label><input id="goldTotal" type="number" min="0" placeholder="5" /></div>
+            <div><label>Platinum</label><input id="platinumTotal" type="number" min="0" max="1" placeholder="1" /></div>
+          </div>
+
+          <h3>Trophies earned</h3>
+          <div class="trophy-row">
+            <div><label>Bronze</label><input id="bronzeEarned" type="number" min="0" placeholder="0" /></div>
+            <div><label>Silver</label><input id="silverEarned" type="number" min="0" placeholder="0" /></div>
+            <div><label>Gold</label><input id="goldEarned" type="number" min="0" placeholder="0" /></div>
+            <div><label>Platinum</label><input id="platinumEarned" type="number" min="0" max="1" placeholder="0" /></div>
+          </div>
+
+          <h3>Completable remaining trophies</h3>
+          <div class="trophy-row">
+            <div><label>Bronze</label><input id="bronzeCompletable" type="number" min="0" placeholder="blank = all" /></div>
+            <div><label>Silver</label><input id="silverCompletable" type="number" min="0" placeholder="blank = all" /></div>
+            <div><label>Gold</label><input id="goldCompletable" type="number" min="0" placeholder="blank = all" /></div>
+            <div><label>Notes</label><input id="notes" placeholder="Online, DLC, missables..." /></div>
+          </div>
+
+          <button onclick="addGame()" id="addGameButton">Add Game</button>
+        </section>
+
+        <section class="panel" id="games">
+          <div class="panel-title-row">
+            <div>
+              <h2>Game Rankings</h2>
+              <p class="hint">PSNProfiles-inspired layout: compact ranking table, trophy-type summary, and ROI scoring.</p>
+            </div>
+            <button class="danger small-button" onclick="clearAll()">Clear all</button>
+          </div>
+
+          <div class="toolbar">
+            <div>
+              <label>Sort by</label>
+              <select id="sortBy" onchange="render()">
+                <option value="overallScore">Best overall ROI</option>
+                <option value="pointsPerHour">Weighted points per hour</option>
+                <option value="hours">Shortest time</option>
+                <option value="difficulty">Lowest difficulty</option>
+                <option value="completablePoints">Most completable weighted points</option>
+                <option value="blockedPoints">Most blocked weighted points</option>
+              </select>
+            </div>
+            <div>
+              <label>Search</label>
+              <input id="searchInput" oninput="render()" placeholder="Filter games or notes" />
+            </div>
+          </div>
+
+          <div class="empty-state" id="emptyState" hidden>
+            <h3>No games yet</h3>
+            <p>Add a short game, a near-finished game, or a game with an obtainable platinum to see ROI rankings.</p>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th><th>Game</th><th>Diff</th><th>Hours</th><th>Total</th><th>Earned</th><th>Completable</th><th>Blocked</th><th>Types</th><th>Plat</th><th>Pts/Hr</th><th>ROI</th><th>Notes</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="gameTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+</body>
+</html>

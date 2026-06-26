@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#101820" />
+  <title>Login | Trophy ROI Optimizer</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="supabase-config.js"></script>
+  <script defer src="auth.js"></script>
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-hero-card">
+      <div class="brand large">
+        <span class="brand-mark">🏆</span>
+        <span><strong>Trophy ROI</strong><small>Optimizer</small></span>
+      </div>
+      <h1>Optimize your next platinum.</h1>
+      <p class="muted">Rank your backlog by trophy return, difficulty, time, and unobtainable trophies.</p>
+      <div class="auth-preview-card">
+        <div><span>Weighted ROI</span><strong>92.4</strong></div>
+        <div><span>Pts/hr</span><strong>145.2</strong></div>
+        <div><span>Plat</span><strong>Obtainable</strong></div>
+      </div>
+    </section>
+
+    <section class="auth-card panel">
+      <div class="auth-tabs">
+        <button id="loginTab" class="tab active" onclick="showAuthMode('login')">Sign in</button>
+        <button id="signupTab" class="tab" onclick="showAuthMode('signup')">Create account</button>
+      </div>
+
+      <div id="setupWarning" class="warning-box" hidden>
+        Add your Supabase URL and anon key in <code>supabase-config.js</code> first.
+      </div>
+
+      <form id="loginForm" onsubmit="event.preventDefault(); signIn();">
+        <h2>Welcome back</h2>
+        <p class="hint">Use your email to sign in. Your username is shown inside the app.</p>
+        <label>Email</label>
+        <input id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+        <label>Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Your password" />
+        <button type="submit">Sign in</button>
+        <button type="button" class="link-button" onclick="showAuthMode('forgot')">Forgot password?</button>
+      </form>
+
+      <form id="signupForm" hidden onsubmit="event.preventDefault(); signUp();">
+        <h2>Create account</h2>
+        <p class="hint">Pick a username for display. Email is still used for login and password reset.</p>
+        <label>Username</label>
+        <input id="signupUsername" type="text" autocomplete="username" placeholder="TrophyHunter23" />
+        <label>Email</label>
+        <input id="signupEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+        <label>Password</label>
+        <input id="signupPassword" type="password" autocomplete="new-password" placeholder="At least 6 characters" />
+        <button type="submit">Create account</button>
+      </form>
+
+      <form id="forgotForm" hidden onsubmit="event.preventDefault(); sendResetEmail();">
+        <h2>Reset password</h2>
+        <p class="hint">Supabase will email you a reset link.</p>
+        <label>Email</label>
+        <input id="resetEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+        <button type="submit">Send reset email</button>
+        <button type="button" class="link-button" onclick="showAuthMode('login')">Back to sign in</button>
+      </form>
+
+      <form id="newPasswordForm" hidden onsubmit="event.preventDefault(); updatePassword();">
+        <h2>Choose new password</h2>
+        <p class="hint">Enter a new password for your account.</p>
+        <label>New password</label>
+        <input id="newPassword" type="password" autocomplete="new-password" placeholder="New password" />
+        <label>Confirm new password</label>
+        <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirm password" />
+        <button type="submit">Save new password</button>
+      </form>
+
+      <div id="authMessage" class="auth-message" hidden></div>
+    </section>
+  </main>
+</body>
+</html>
