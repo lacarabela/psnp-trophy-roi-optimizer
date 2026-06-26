@@ -176,8 +176,6 @@ tr:hover td { background: rgba(47,128,237,.05); }
   .actions button { width:100%; }
 }
 
-
-/* Revert main dashboard back to full-width stacked PSNProfiles-inspired layout */
 body:not(.login-page) {
   background:
     radial-gradient(circle at 20% 0%, rgba(47, 108, 173, 0.18), transparent 30rem),
@@ -189,7 +187,6 @@ body:not(.login-page) .container {
   margin: 0 auto;
 }
 
-/* Disable the left/right dashboard layout from the previous fix */
 .app-layout,
 .side-panel,
 .main-panel {
@@ -206,7 +203,6 @@ body:not(.login-page) .container {
   margin-bottom: 18px;
 }
 
-/* Keep the PSNProfiles-style dark blue card feel */
 body:not(.login-page) .hero,
 body:not(.login-page) .card {
   background: linear-gradient(180deg, #1c2d40, #142235);
@@ -223,7 +219,6 @@ body:not(.login-page) .top-pick {
   border-color: #b8912e;
 }
 
-/* Better spacing for account and auth controls */
 #accountUsername,
 #username,
 .spaced-input {
@@ -244,7 +239,6 @@ input[type="password"] {
   margin-top: 8px;
 }
 
-/* Login page panel balance without affecting main page */
 .login-page {
   min-height: 100vh;
   display: grid;
